@@ -8,4 +8,5 @@ class DashboardStats(BaseModel):
     vat_ready_count: int = Field(serialization_alias="vatReadyCount")
     vat_dyeing_count: int = Field(serialization_alias="vatDyeingCount")
     lots_last_7d: int = Field(serialization_alias="lotsLast7d")
+    at_capacity_this_week: int = Field(serialization_alias="atCapacityThisWeek")
     checks_last_24h: int = Field(serialization_alias="checksLast24h")

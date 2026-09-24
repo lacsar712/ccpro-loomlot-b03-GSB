@@ -33,3 +33,4 @@ class DyeLotOut(BaseModel):
     fabric_kg: float = Field(serialization_alias="fabricKg")
     started_at: datetime = Field(serialization_alias="startedAt")
     operator_name: str = Field(serialization_alias="operatorName")
+    at_capacity: bool = Field(default=False, serialization_alias="atCapacity")

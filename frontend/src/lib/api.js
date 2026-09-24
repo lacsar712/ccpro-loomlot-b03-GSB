@@ -53,3 +53,8 @@ export const VAT_STATUS = {
   dyeing: '染色中',
   drain: '排液',
 };
+
+// 布重 kg 上限 = 缸容 L × 0.08，四舍五入到两位（与后端换算一致）
+export function fabricCapacityKg(capacityL) {
+  return Math.round(capacityL * 0.08 * 100) / 100;
+}

@@ -80,7 +80,9 @@ def seed() -> None:
             lot1 = DyeLot(
                 vat_id=v1.id,
                 recipe_name="靛蓝冷染三浸",
-                fabric_kg=42.5,
+                # v1 缸容 800L → 布重上限 800×0.08=64kg；60kg 接近触顶，
+                # 再加 4kg 恰好触顶、加 5kg 触发累计超限 400
+                fabric_kg=60.0,
                 started_at=now - timedelta(hours=6),
                 operator_name="染程操作员",
             )

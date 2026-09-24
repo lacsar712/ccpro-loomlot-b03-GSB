@@ -41,6 +41,10 @@
       <div class="l">近 7 日染程</div>
     </div>
     <div class="stat">
+      <div class="n">{stats.atCapacityThisWeek}</div>
+      <div class="l">本周触顶染程</div>
+    </div>
+    <div class="stat">
       <div class="n">{stats.checksLast24h}</div>
       <div class="l">近 24 时抽检</div>
     </div>
@@ -50,6 +54,7 @@
 <div class="panel">
   <p style="margin:0 0 0.75rem;color:var(--indigo-mist);font-size:0.9rem;">
     业务约束：仅当染缸为 <strong>ready</strong> 或 <strong>dyeing</strong> 时可新建染程；新建后染缸自动变为 dyeing。排液可用染缸「完成排液」动作。
+    <br />布重 kg 上限 ＝ 染缸缸容 L × <strong>0.08</strong>（四舍五入两位），单次与同缸累计均不得超限，超限返回 400；「本周触顶染程」与染程列表中的触顶行数一致。
   </p>
   <div class="toolbar">
     <a class="btn" href="/houses" use:link>进入染坊</a>

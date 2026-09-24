@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { api, VAT_STATUS, toLocalInput, fromLocalInput } from '../lib/api.js';
+  import { api, VAT_STATUS, toLocalInput, fromLocalInput, fabricCapacityKg } from '../lib/api.js';
 
   let vats = [];
   let rows = [];
@@ -13,6 +13,10 @@
     operatorName: '染程操作员',
   };
   let editing = null;
+
+  // 当前所选染缸的布重 kg 上限（缸容 × 0.08，四舍五入两位）
+  $: selectedVat = vats.find((v) => String(v.id) === String(form.vatId)) || null;
+  $: selectedLimit = selectedVat ? fabricCapacityKg(selectedVat.capacityL) : null;
 
   async function load() {
     error = '';
@@ -86,7 +90,7 @@
 </script>
 
 <h1 class="page-title">染程</h1>
-<p class="page-sub">仅 ready / dyeing 染缸可开缸；提交后染缸自动变为染色中。</p>
+<p class="page-sub">仅 ready / dyeing 染缸可开缸；提交后染缸自动变为染色中。布重 kg 上限＝缸容 L × 0.08，单次与同缸累计均不得超过。</p>
 
 <div class="panel" style="margin-bottom:1rem;">
   <div class="form-grid">
@@ -101,7 +105,13 @@
       </select>
     </label>
     <label>配方名 <input bind:value={form.recipeName} /></label>
-    <label>布料 kg <input type="number" step="0.1" bind:value={form.fabricKg} /></label>
+    <label
+      >布料 kg
+      <input type="number" step="0.1" bind:value={form.fabricKg} />
+      {#if selectedLimit !== null}
+        <span class="cap-hint">本缸单次/累计上限 {selectedLimit} kg（缸容 {selectedVat.capacityL} L × 0.08）</span>
+      {/if}
+    </label>
     <label>开始时间 <input type="datetime-local" bind:value={form.startedAt} /></label>
     <label>操作员 <input bind:value={form.operatorName} /></label>
   </div>
@@ -122,6 +132,7 @@
         <th>染缸</th>
         <th>配方</th>
         <th>布料 kg</th>
+        <th>触顶</th>
         <th>开始</th>
         <th>操作员</th>
         <th></th>
@@ -134,6 +145,11 @@
           <td>{vatLabel(row.vatId)}</td>
           <td>{row.recipeName}</td>
           <td>{row.fabricKg}</td>
+          <td>
+            {#if row.atCapacity}
+              <span class="badge dyeing" title="同缸累计布重已达到该缸上限（缸容 × 0.08）">触顶</span>
+            {/if}
+          </td>
           <td>{new Date(row.startedAt).toLocaleString()}</td>
           <td>{row.operatorName}</td>
           <td class="row-actions">
@@ -145,3 +161,12 @@
     </tbody>
   </table>
 </div>
+
+<style>
+  .cap-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--indigo-mist, #9aa0c0);
+  }
+</style>

@@ -56,6 +56,13 @@ docker compose down
 
 - 仅当染缸状态为 `ready` 或 `dyeing` 时可新建染程，否则 409
 - 新建染程后，染缸状态自动设为 `dyeing`
+- **布重缸容换算**：染程布重 kg 上限 ＝ 所属染缸缸容 L × **0.08**，结果四舍五入到两位小数（换算系数 `FABRIC_CAPACITY_FACTOR = 0.08`，见 `backend/app/services/capacity.py`）
+  - **单次校验**：单个染程 `fabricKg` 不得超过该上限
+  - **累计校验**：同缸所有未删除染程布重之和（编辑时排除自身）也不得超过同一上限
+  - 两类校验共用同一函数 `ensure_fabric_within_capacity`，新建（`POST`）与更新（`PUT`，含改挂染缸）都执行；超限返回 **400**，中文错误信息回显该缸上限值
+- **触顶标记**：某缸按建程顺序累计布重，使该缸累计恰好达到上限的那一程标记为「触顶」（每缸至多一条；单缸布重恰好等于上限时即该缸第一条）
+  - `GET /api/dye-lots` 每行返回 `atCapacity`（前端列表展示「触顶」徽标）
+  - 看板 `GET /api/dashboard/stats` 返回 `atCapacityThisWeek`（本周一 00:00 起 started_at 的触顶染程数），与列表触顶行数同源对账
 - 可选接口：`POST /api/vats/{id}/drain` 将染缸置为 `drain`
 
 ## 主要 API
