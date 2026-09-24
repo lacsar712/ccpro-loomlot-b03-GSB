@@ -31,5 +31,8 @@ class DyeLotOut(BaseModel):
     vat_id: int = Field(serialization_alias="vatId")
     recipe_name: str = Field(serialization_alias="recipeName")
     fabric_kg: float = Field(serialization_alias="fabricKg")
+    # 缸容换算上限（缸容L × 0.08，四舍五入两位）及本行是否触顶
+    fabric_capacity_kg: Optional[float] = Field(default=None, serialization_alias="fabricCapacityKg")
+    at_capacity: bool = Field(default=False, serialization_alias="atCapacity")
     started_at: datetime = Field(serialization_alias="startedAt")
     operator_name: str = Field(serialization_alias="operatorName")

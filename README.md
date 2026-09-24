@@ -49,7 +49,7 @@ docker compose down
 
 1. **DyeHouse** — `name`, `waterNote`, `notes`
 2. **Vat** — `dyeHouseId`, `vatCode`, `fiberType`, `capacityL`, `status` ∈ `ready|dyeing|drain`
-3. **DyeLot** — `vatId`, `recipeName`, `fabricKg`, `startedAt`, `operatorName`
+3. **DyeLot** — `vatId`, `recipeName`, `fabricKg`, `startedAt`, `operatorName`（列表另附换算字段 `fabricCapacityKg`、触顶标记 `atCapacity`）
 4. **FastnessCheck** — `dyeLotId`, `checkedAt`, `washFastness`(1–5), `rubFastness`(>0), `tempC`, `notes`
 
 ### 规则
@@ -57,6 +57,18 @@ docker compose down
 - 仅当染缸状态为 `ready` 或 `dyeing` 时可新建染程，否则 409
 - 新建染程后，染缸状态自动设为 `dyeing`
 - 可选接口：`POST /api/vats/{id}/drain` 将染缸置为 `drain`
+
+### 缸容换算布重上限（系数 0.08）
+
+- 换算：**布重千克上限 = 缸容升数 × `0.08`**，结果按四舍五入保留两位小数
+  （例：`800L × 0.08 = 64.00kg`，`500L × 0.08 = 40.00kg`）
+- 新建 / 更新染程时同时拦截，均返回 **400**，中文提示回显换算后的上限值：
+  - **单次**：本行布重不得超过上限；
+  - **累计**：同缸所有未删除染程布重之和（更新时排除本行自身）不得超过上限。
+  - 单次与累计共用同一校验函数（`app/services/capacity.py`），不分别实现。
+- 染程列表每行返回 `fabricCapacityKg`（上限）与 `atCapacity`（本行布重是否等于上限，即「触顶」标记）。
+- 看板 `GET /api/dashboard/stats` 返回 `atCapacityLotsThisWeek`（本周触顶染程数，本周按周一起算），
+  与染程列表的触顶行数按同一判定函数对账。
 
 ## 主要 API
 

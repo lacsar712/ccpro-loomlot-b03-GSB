@@ -73,7 +73,15 @@ def seed() -> None:
                 capacity_l=500.0,
                 status="drain",
             )
-            db.add_all([v1, v2, v3, v4])
+            # 500L → 布重上限 40.00kg，种子里放一缸恰好触顶用于看板/列表对账
+            v5 = Vat(
+                dye_house_id=h2.id,
+                vat_code="S-03",
+                fiber_type="丝",
+                capacity_l=500.0,
+                status="dyeing",
+            )
+            db.add_all([v1, v2, v3, v4, v5])
             db.flush()
 
             now = datetime.now(timezone.utc)
@@ -84,6 +92,14 @@ def seed() -> None:
                 started_at=now - timedelta(hours=6),
                 operator_name="染程操作员",
             )
+            # v1 缸容 800L → 上限 64.00kg；与 lot1 累计 63.5kg，接近触顶但不超限
+            lot1b = DyeLot(
+                vat_id=v1.id,
+                recipe_name="靛蓝复浸补色",
+                fabric_kg=21.0,
+                started_at=now - timedelta(hours=2),
+                operator_name="染程操作员",
+            )
             lot2 = DyeLot(
                 vat_id=v3.id,
                 recipe_name="青蓝套染",
@@ -91,7 +107,15 @@ def seed() -> None:
                 started_at=now - timedelta(days=2),
                 operator_name="染坊主管",
             )
-            db.add_all([lot1, lot2])
+            # 恰好等于 500L × 0.08 = 40.00kg 上限：本行触顶，计入本周看板
+            lot3 = DyeLot(
+                vat_id=v5.id,
+                recipe_name="素绢月白单染",
+                fabric_kg=40.0,
+                started_at=now,
+                operator_name="染坊主管",
+            )
+            db.add_all([lot1, lot1b, lot2, lot3])
             db.flush()
 
             # lot2 was on ready vat historically — keep v3 ready for demo create path

@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { api, VAT_STATUS, toLocalInput, fromLocalInput } from '../lib/api.js';
 
+  // 与后端一致的换算系数（仅用于输入提示，真正拦截以后端 400 为准）
+  const CAPACITY_FACTOR = 0.08;
+
   let vats = [];
   let rows = [];
   let error = '';
@@ -33,6 +36,12 @@
     if (!v) return id;
     return `${v.vatCode}（${VAT_STATUS[v.status] || v.status}）`;
   }
+
+  // 当前所选染缸的布重上限（kg），用于输入提示
+  $: selectedVat = vats.find((v) => String(v.id) === String(form.vatId));
+  $: selectedLimitKg = selectedVat
+    ? Math.round(selectedVat.capacityL * CAPACITY_FACTOR * 100) / 100
+    : null;
 
   async function save() {
     error = '';
@@ -86,7 +95,9 @@
 </script>
 
 <h1 class="page-title">染程</h1>
-<p class="page-sub">仅 ready / dyeing 染缸可开缸；提交后染缸自动变为染色中。</p>
+<p class="page-sub">
+  仅 ready / dyeing 染缸可开缸；提交后染缸自动变为染色中。布重上限 = 缸容升数 × 0.08（四舍五入两位），单次与同缸累计均不得超限。
+</p>
 
 <div class="panel" style="margin-bottom:1rem;">
   <div class="form-grid">
@@ -101,7 +112,13 @@
       </select>
     </label>
     <label>配方名 <input bind:value={form.recipeName} /></label>
-    <label>布料 kg <input type="number" step="0.1" bind:value={form.fabricKg} /></label>
+    <label>
+      布料 kg
+      <input type="number" step="0.1" bind:value={form.fabricKg} />
+      {#if selectedLimitKg !== null}
+        <span class="hint">该缸布重上限 {selectedLimitKg.toFixed(2)}kg（同缸累计同限）</span>
+      {/if}
+    </label>
     <label>开始时间 <input type="datetime-local" bind:value={form.startedAt} /></label>
     <label>操作员 <input bind:value={form.operatorName} /></label>
   </div>
@@ -122,6 +139,7 @@
         <th>染缸</th>
         <th>配方</th>
         <th>布料 kg</th>
+        <th>触顶</th>
         <th>开始</th>
         <th>操作员</th>
         <th></th>
@@ -133,7 +151,14 @@
           <td>{row.id}</td>
           <td>{vatLabel(row.vatId)}</td>
           <td>{row.recipeName}</td>
-          <td>{row.fabricKg}</td>
+          <td>
+            {row.fabricKg}{#if row.fabricCapacityKg != null}
+              <span class="cap">/ {row.fabricCapacityKg.toFixed(2)}</span>
+            {/if}
+          </td>
+          <td>
+            {#if row.atCapacity}<span class="badge dyeing">触顶</span>{:else}<span class="muted">—</span>{/if}
+          </td>
           <td>{new Date(row.startedAt).toLocaleString()}</td>
           <td>{row.operatorName}</td>
           <td class="row-actions">
@@ -145,3 +170,17 @@
     </tbody>
   </table>
 </div>
+
+<style>
+  .hint {
+    font-size: 0.72rem;
+    color: var(--indigo-mist);
+  }
+  .cap {
+    color: var(--indigo-mist);
+    font-size: 0.8rem;
+  }
+  .muted {
+    color: var(--indigo-mist);
+  }
+</style>
